@@ -22,7 +22,8 @@ const App4 = () => {
     const [paused, setpaused] = useState(false)
     const [stoppedRecording, setstoppedRecording] = useState(false)
     const [finished, setfinished] = useState(false)
-    const [audioPath, setaudioPath] = useState(AudioUtils.DocumentDirectoryPath + '/test.aac')
+    // const [audioPath, setaudioPath] = useState(AudioUtils.DocumentDirectoryPath + '/test.aac')
+    const [audioPath, setaudioPath] = useState(AudioUtils.DocumentDirectoryPath + "/" + Math.random().toString() + '.aac')
     const [hasPermission, sethasPermission] = useState(undefined)
     const [recordes, setrecordes] = useState([])
 
@@ -46,6 +47,8 @@ const App4 = () => {
             };
 
             AudioRecorder.onFinished = (data) => {
+                console.log("AudioRecorder.onFinished==>", data)
+                setaudioPath(AudioUtils.DocumentDirectoryPath + "/" + Math.random().toString() + '.aac')
                 // Android callback comes in the form of a promise instead.
                 if (Platform.OS === 'ios') {
                     finishRecording(data.status === "OK", data.audioFileURL, data.audioFileSize)
@@ -109,6 +112,7 @@ const App4 = () => {
     }
 
     const stop = async () => {
+        console.log("hii from stop")
         if (!recording) {
             console.warn('Can\'t stop, not recording!');
             return;
@@ -118,8 +122,9 @@ const App4 = () => {
         setrecording(false)
         setpaused(false)
         try {
-            const filePath = await AudioRecorder.stopRecording();
-
+            let filePath = await AudioRecorder.stopRecording();
+            // filePath = " /data/user/0/com.test/files/" + Math.random().toString() + ".aac"
+            console.log("hii file from stop ==>", filePath)
             if (Platform.OS === 'android') {
                 finishRecording(true, filePath)
             }
@@ -129,20 +134,19 @@ const App4 = () => {
         }
     }
     const play = async (item) => {
+        console.log("from play ", item)
         if (recording) {
             await stop();
         }
 
         // These timeouts are a hacky workaround for some issues with react-native-sound.
         // See https://github.com/zmxv/react-native-sound/issues/89.
-        setTimeout(() => {
-            var sound = new Sound(item, '', (error) => {
-                if (error) {
-                    console.log('failed to load the sound', error);
-                }
-            });
 
-            setTimeout(() => {
+        let sound = new Sound(item, Sound.MAIN_BUNDLE, (error) => {
+            if (error) {
+                console.log('failed to load the sound', error);
+            } else {
+                // sound.play(); // have to put the call to play() in the onload callback
                 sound.play((success) => {
                     if (success) {
                         console.log('successfully finished playing');
@@ -150,8 +154,26 @@ const App4 = () => {
                         console.log('playback failed due to audio decoding errors');
                     }
                 });
-            }, 100);
-        }, 100);
+            }
+        });
+
+        // setTimeout(() => {
+        //     var sound = new Sound(item, '', (error) => {
+        //         if (error) {
+        //             console.log('failed to load the sound', error);
+        //         }
+        //     });
+
+        //     setTimeout(() => {
+        //         sound.play((success) => {
+        //             if (success) {
+        //                 console.log('successfully finished playing');
+        //             } else {
+        //                 console.log('playback failed due to audio decoding errors');
+        //             }
+        //         });
+        //     }, 100);
+        // }, 100);
     }
 
     // const play = async () => {
@@ -221,10 +243,10 @@ const App4 = () => {
         <View style={styles.container}>
             <View style={styles.controls}>
                 {renderButton("RECORD", () => { record() }, recording)}
-                {renderButton("PLAY", () => { play() })}
+                {/* {renderButton("PLAY", () => { play() })} */}
                 {renderButton("STOP", () => { stop() })}
                 {/* {this._renderButton("PAUSE", () => {this._pause()} )} */}
-                {renderPauseButton(() => { paused ? resume() : pause() })}
+                {/* {renderPauseButton(() => { paused ? resume() : pause() })} */}
                 <Text style={styles.progressText}>{currentTime}s</Text>
 
                 <FlatList
